@@ -1,8 +1,7 @@
 #![allow(unexpected_cfgs)]
 use anchor_lang::prelude::*;
 use anchor_lang::system_program::{transfer, Transfer};
-//use solana_client::nonblocking::rpc_client::RpcClient;
-//use solana_sdk::{ commitment_config::CommitmentCongig };
+use anchor_spl::token_interface::{ transfer_checked, TransferChecked };
 
 // MyPesa modules
 mod mypesa_accounts;
@@ -28,15 +27,19 @@ pub mod mypesa_vault {
         trans_log.updated_at = clock.unix_timestamp;
         trans_log.trans_type = "CREDIT".to_string();
 
-        transfer(
+        let decimals = ctx.accounts.mint_of_the_token_being_sent.decimals;
+        transfer_checked(
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
-                Transfer {
+                TransferChecked {
+                    mint: ctx.accounts.mint_of_the_token_being_sent.to_account_info(),
                     from: ctx.accounts.sender_wallet_token_account.to_account_info(),
                     to: ctx.accounts.mypesa_vault.to_account_info(),
+                    authority: ctx.accounts.sender_wallet_token_account.to_account_info(),
                 }
             ),
             deposit_amount,
+            decimals,
         )?;
         Ok(())
     }
@@ -54,16 +57,20 @@ pub mod mypesa_vault {
 
         let mint_keys = ctx.accounts.mint_of_the_token_being_sent.key();
         let signers = &[b"mypesa_vault", mint_keys.as_ref(), &[ctx.bumps.mypesa_vault]];
-        transfer(
+        let decimals = ctx.accounts.mint_of_the_token_being_sent.decimals;
+        transfer_checked(
             CpiContext::new_with_signer(
                 ctx.accounts.system_program.to_account_info(),
-                Transfer {
+                TransferChecked {
+                    mint: ctx.accounts.mint_of_the_token_being_sent.to_account_info(),
                     from: ctx.accounts.mypesa_vault.to_account_info(),
                     to: ctx.accounts.sender_wallet_token_account.to_account_info(),
+                    authority: ctx.accounts.mypesa_vault_account_pda.to_account_info(),
                 },
                 &[&signers[..]],
             ),
             withdraw_amount,
+            decimals
         )?;
         Ok(())
     }
