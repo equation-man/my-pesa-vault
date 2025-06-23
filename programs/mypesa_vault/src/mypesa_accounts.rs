@@ -1,6 +1,7 @@
 /// CONTAINS THE ACCOUNTS USED IN THE PROGRAM
 use anchor_lang::prelude::*;
 use anchor_spl::token::{TokenAccount, Mint, Token};
+use anchor_spl::associated_token::AssociatedToken;
 
 #[derive(Accounts)]
 pub struct InitializeMypesaVault<'info> {
@@ -10,7 +11,7 @@ pub struct InitializeMypesaVault<'info> {
     #[account(
         init,
         payer=signer,
-        seeds=[b"mypesa_vault_account_pda", mypesa_vault.key().as_ref()],
+        seeds=[b"mypesa_vault_account_pda"],
         bump,
         space=TransactionLog::INIT_SPACE,
     )]
@@ -20,7 +21,7 @@ pub struct InitializeMypesaVault<'info> {
     #[account(
         init,
         payer=signer,
-        seeds=[b"mypesa_vault", mint_of_the_token_being_sent.key().as_ref()],
+        seeds=[b"mypesa_vault", signer.key().as_ref()],
         bump,
         token::mint=mint_of_the_token_being_sent,
         token::authority=mypesa_vault_account_pda,
@@ -41,28 +42,33 @@ pub struct MypesaVaultActions<'info> {
     /// CHECK: we are passing here ourselves
     #[account(
         mut,
-        seeds=[b"mypesa_vault_account_pda", mypesa_vault.key().as_ref()],
+        seeds=[b"mypesa_vault_account_pda", signer.key().as_ref()],
         bump
     )]
     pub mypesa_vault_account_pda: Account<'info, TransactionLog>,
     #[account(
         mut,
-        seeds=[b"mypesa_vault", mint_of_the_token_being_sent.key().as_ref()],
-        bump,
-        token::mint=mint_of_the_token_being_sent,
-        token::authority=mypesa_vault_account_pda,
+        associated_token::mint=mint_of_the_token_being_sent,
+        associated_token::authority=mypesa_vault_account_pda,
+        associated_token::token_program=token_program,
     )]
     pub mypesa_vault: Account<'info, TokenAccount>,
 
     // Token account sending tokens to the vault.
-    #[account(mut)]
+    #[account(
+        mut,
+        token::mint=mint_of_the_token_being_sent,
+        token::authority=sender_wallet_token_account,
+        seeds=[b"sender_wallet"],
+        bump
+    )]
     pub sender_wallet_token_account: Account<'info, TokenAccount>,
-
     pub mint_of_the_token_being_sent: Account<'info, Mint>,
 
     #[account(mut)]
     pub signer: Signer<'info>,
     pub system_program: Program<'info, System>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token>,
 }
 

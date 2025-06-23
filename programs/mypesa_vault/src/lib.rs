@@ -14,6 +14,7 @@ pub mod mypesa_vault {
     use super::*;
 
     pub fn initialize_vault(_ctx: Context<InitializeMypesaVault>) -> Result<()> {
+        msg!("Created mypesa vault.");
         Ok(())
     }
 
@@ -56,7 +57,7 @@ pub mod mypesa_vault {
 
 
         let mint_keys = ctx.accounts.mint_of_the_token_being_sent.key();
-        let signers = &[b"mypesa_vault", mint_keys.as_ref(), &[ctx.bumps.mypesa_vault]];
+        let signers = &[b"mypesa_vault", mint_keys.as_ref(), &[ctx.bumps.mypesa_vault_account_pda]];
         let decimals = ctx.accounts.mint_of_the_token_being_sent.decimals;
         transfer_checked(
             CpiContext::new_with_signer(
