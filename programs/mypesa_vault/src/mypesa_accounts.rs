@@ -13,33 +13,25 @@ pub struct InitializeMypesaVault<'info> {
         payer=signer,
         seeds=[b"mypesa_vault_account_pda"],
         bump,
-        space=TransactionLog::INIT_SPACE,
+        space= 8 + TransactionLog::INIT_SPACE,
     )]
     pub mypesa_vault_account_pda: Account<'info, TransactionLog>,
     // Holds the tokens being stored in the vault
     // Owned by the program via pda.
-    #[account(
-        init,
-        payer=signer,
-        seeds=[b"mypesa_vault", signer.key().as_ref()],
-        bump,
-        token::mint=mint_of_the_token_being_sent,
-        token::authority=mypesa_vault_account_pda,
-    )]
-    pub mypesa_vault: Account<'info, TokenAccount>,
+     
+    
     // Mint for the token sent to be stored in the vault.
-    pub mint_of_the_token_being_sent: Account<'info, Mint>,
 
     // Signer
     #[account(mut)]
     pub signer: Signer<'info>,
     pub system_program: Program<'info, System>,
-    pub token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
 pub struct MypesaVaultActions<'info> {
     /// CHECK: we are passing here ourselves
+    // This pda logs the transactional information and signs the transactions.
     #[account(
         mut,
         seeds=[b"mypesa_vault_account_pda", signer.key().as_ref()],
@@ -47,7 +39,8 @@ pub struct MypesaVaultActions<'info> {
     )]
     pub mypesa_vault_account_pda: Account<'info, TransactionLog>,
     #[account(
-        mut,
+        init_if_needed,
+        payer=signer,
         associated_token::mint=mint_of_the_token_being_sent,
         associated_token::authority=mypesa_vault_account_pda,
         associated_token::token_program=token_program,

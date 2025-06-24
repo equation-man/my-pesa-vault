@@ -28,7 +28,6 @@ describe("mypesa_vault", () => {
     const tx = await program.methods.initializeVault().accounts({
         mypesaVaultAccountPda: pda,
         systemProgram: web3.SystemProgram.ProgramId,
-        //tokenProgram: TOKEN_2022_PROGRAM_ID,
     }).rpc({commitment: "confirmed"});
     console.log("Your transaction signature", tx);
   });
